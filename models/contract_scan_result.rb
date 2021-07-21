@@ -4,7 +4,7 @@
 require "json"
 
 class ContractScanResult
-  # There are two scores included in the results: a sentencecore and a
+  # There are two scores included in the results: a sentence score and a
   # extraction score.
   #
   # The first score (at the sentence / phrase level, listed on each `result`
