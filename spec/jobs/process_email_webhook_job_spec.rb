@@ -37,5 +37,12 @@ RSpec.describe ProcessEmailWebhookJob do
                                                        Email.count
                                                      }.by(1)
     end
+
+    it "scans the attachment" do
+      described_class.perform(message)
+      expect(CreateAttachmentScanService).to have_received(:run).once.with(
+        message.attachments.first
+      )
+    end
   end
 end

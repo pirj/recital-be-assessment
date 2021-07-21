@@ -12,6 +12,9 @@ class ProcessEmailWebhookJob
 
   sig { params(message: EmailProvider::Message).void }
   def self.perform(message)
+    # Here is where the message would be uploaded
+    UploadEmailAttachmentsForScanService.run(message)
+
     # Tip: if you want step-by-step debugging, you can uncomment this line here.
     # Docs: https://github.com/deivid-rodriguez/pry-byebug#commands
     # binding.pry
@@ -19,9 +22,6 @@ class ProcessEmailWebhookJob
 
     # If there's no attachments then there's nothing to scan
     return if message.attachments.blank?
-
-    # Here is where the message would be uploaded
-    UploadEmailAttachmentsForScanService.run(message)
   end
 
   sig { params(message: EmailProvider::Message).void }
@@ -29,7 +29,7 @@ class ProcessEmailWebhookJob
     # Exclamation marks mean an error will be thrown if the operation fails
     Email.create!(
       external_id: message.id,
-      conversation: Conversation.find_by!(external_id: message.conversation_id),
+      conversation: Conversation.find_by!(external_id: message.conversation_id)
     )
   end
 
