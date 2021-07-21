@@ -54,33 +54,76 @@ class ContractScanResult
   end
 
   def best_title_result
-    best_result = filtered_results.
-      select { |r| r["scan-key"] == "ContractTitle" }.
-      max_by { |r| r["score"] }
-
-    return if best_result.blank?
-
-    best_result["extracted-values"].
-      max_by { |v| v["score"] }["normalized-value"]
+    [
+      V1.new(parsed_result).best_title_result,
+      V2.new(parsed_result).best_title_result,
+    ].compact.
+      max_by(&:first)&.
+      second
   end
 
   def party_results
-    filtered_results.
+    parsed_result["results"].
       select { |r| r["scan-key"] == "PartyName" }.
-      map { |result| result["extracted-values"] }.
-      flatten.
+      reject { |r| r["score"] < MIN_SCORE_FOR_RESULTS }.
+      flat_map { |result| result["extracted-values"] }.
+      reject { |v| v["score"] < MIN_SCORE_FOR_VALUES }.
       map { |v| v["normalized-value"] }.
       uniq.
       reject { |p| PARTY_NAME_BLACKLIST.include?(p.downcase) }
   end
 
-  def filtered_results
-    @filtered_results ||= parsed_result["results"].
-      reject { |r| r["score"] < MIN_SCORE_FOR_RESULTS }.
-      each do |result|
-      result["extracted-values"].reject! do |v|
-        v["score"] < MIN_SCORE_FOR_VALUES
-      end
+  class V1
+    def initialize(parsed_result)
+      @parsed_result = parsed_result
+    end
+
+    def filtered_results
+      @parsed_result["results"].
+        reject { |r| r["score"].nil? }.
+        reject { |r| r["score"] < MIN_SCORE_FOR_RESULTS }.
+        each do |result|
+          result["extracted-values"].reject! do |v|
+            v["score"] < MIN_SCORE_FOR_VALUES
+          end
+        end
+    end
+
+    def best_title_result
+      best_result = filtered_results.
+        select { |r| r["scan-key"] == "ContractTitle" }.
+        max_by { |r| r["score"] }
+
+      return unless best_result
+
+      best_result["extracted-values"].
+        max_by { |v| v["score"] }.values_at("score", "normalized-value")
+    end
+  end
+
+  class V2
+    def initialize(parsed_result)
+      @parsed_result = parsed_result
+    end
+
+    def filtered_results
+      @parsed_result["results"].
+        each do |result|
+          result["extracted-values"].reject! do |v|
+            v["score"] < MIN_SCORE_FOR_VALUES
+          end
+        end
+    end
+
+    def best_title_result
+      best_value = filtered_results.
+        select { |r| r["scan-key"] == "ContractTitle_V2" }.
+        flat_map { |r| r["extracted-values"] }.
+        max_by { |v| v["score"] }
+
+      return unless best_value
+
+      best_value.values_at("score", "normalized-value")
     end
   end
 end
