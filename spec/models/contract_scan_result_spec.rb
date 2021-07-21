@@ -10,7 +10,9 @@ RSpec.describe ContractScanResult do
   end
 
   # See spec/factories.rb for an example of mocking
-  let(:contract_scan_result) { FactoryBot.build(:contract_scan_result) }
+  let(:contract_scan_result) do
+    FactoryBot.build(:contract_scan_result, :no_title_v2_results)
+  end
 
   it "sets the contract type" do
     expect(result.type).to eq "Non-Disclosure Agreement"
@@ -24,9 +26,18 @@ RSpec.describe ContractScanResult do
     expect(result).to be_full_contract_info
   end
 
+  context "with v2 contract scan" do
+    let(:contract_scan_result) { FactoryBot.build(:contract_scan_result) }
+
+    it "sets the contract type" do
+      expect(result.type).to eq "Contractor Agreement"
+    end
+  end
+
   context "when contract scan returns the two possible contract titles" do
     let(:contract_scan_result) do
-      FactoryBot.build(:contract_scan_result, :two_title_results)
+      FactoryBot.build(:contract_scan_result, :no_title_v2_results,
+                       :two_title_results)
     end
 
     it "returns the entry with higher sentence score" do

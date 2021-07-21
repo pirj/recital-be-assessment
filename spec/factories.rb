@@ -63,6 +63,17 @@ FactoryBot.define do
                 "score": 0.955939669149689,
                 "scan-key": "ContractTitle",
                 "text": "This Non-Disclosure Agrement, together with..."
+            },
+            {
+                "extracted-values": [
+                    {
+                        "normalized-value": "Contractor Agreement",
+                        "score": 0.9,
+                        "text": "Non-Disclosure Agreement"
+                    }
+                ],
+                "scan-key": "ContractTitle_V2",
+                "text": "This Contractor Agreement, together with..."
             }
         ]
     }
@@ -115,7 +126,17 @@ FactoryBot.define do
       after(:build) do |result|
         parsed_result = JSON.parse(result.raw_result)
         parsed_result["results"].
-          reject! { |r| r["scan-key"] == "ContractTitle" }
+          reject! { |r| r["scan-key"] == "ContractTitle" }.
+          reject! { |r| r["scan-key"] == "ContractTitle_V2" }
+        result.raw_result = parsed_result.to_json
+      end
+    end
+
+    trait :no_title_v2_results do
+      after(:build) do |result|
+        parsed_result = JSON.parse(result.raw_result)
+        parsed_result["results"].
+          reject! { |r| r["scan-key"] == "ContractTitle_V2" }
         result.raw_result = parsed_result.to_json
       end
     end
